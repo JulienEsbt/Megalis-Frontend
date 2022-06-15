@@ -1,10 +1,10 @@
 import './App.css';
 import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import abi from "./utils/megalisV2.json";
+import abi from "./utils/megalisV1.json";
 
 function App() {
-  const contractAddress = "0x530A6F3bb5c5dB2de8bd0a69B46de9b71Ec34b94";
+  const contractAddress = "0x6b3E0aaaB217e1CB61aAF461F2A075d5F84Fb33e";
 
   const [currentAccount, setCurrentAccount] = useState();
   const [siren, setSiren] = useState('Aucun siren.');
@@ -57,7 +57,7 @@ function App() {
           console.log(error);
         }
       } else {
-        alert("MetaMask not detected !");
+        alert("Ethereum object doesn't exist or not detected, get Metamask !");
       }
     }
 
@@ -77,7 +77,7 @@ function App() {
           console.log(error);
         }
       } else {
-        alert("MetaMask not detected !");
+        alert("Ethereum object doesn't exist or not detected, get Metamask !");
       }
     }
 
@@ -91,16 +91,16 @@ function App() {
       if (ethereum) {
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
-        const megalisV2Contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
 
         console.log("Initialisation d'une publication : ");
-        const tx = await megalisV2Contract.publish(siren, url, hash);
+        const tx = await megalisV1Contract.publish(siren, url, hash);
         console.log("Mining...", tx.hash);
         await tx.wait();
         console.log("Mined -- ", tx.hash);
 
       } else {
-        console.log("Ethereum object doesn't exist!");
+        console.log("Ethereum object doesn't exist or not detected, get Metamask !");
       }
 
     } catch (error) {
@@ -118,14 +118,14 @@ function App() {
       if (ethereum) {
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
-        const megalisV2Contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
 
         console.log("Liste des adresses ayant publié quelque chose : ");
-        const sirens = await megalisV2Contract.getAllSirens();
+        const sirens = await megalisV1Contract.getAllSirens();
         console.table(sirens);
 
       } else {
-        console.log("Ethereum object doesn't exist!");
+        console.log("Ethereum object doesn't exist or not detected, get Metamask !");
       }
 
     } catch (error) {
@@ -143,13 +143,13 @@ function App() {
       if (ethereum) {
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
-        const megalisV2Contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
 
         console.log("Liste des publications de l'adresse %s : ", adresse);
-        const publications = await megalisV2Contract.getSirenPublications(adresse);
+        const publications = await megalisV1Contract.getSirenPublications(adresse);
         console.table(publications);
       } else {
-        console.log("Ethereum object doesn't exist!");
+        console.log("Ethereum object doesn't exist or not detected, get Metamask !");
       }
     } catch (error) {
       console.log(error);
@@ -167,10 +167,10 @@ function App() {
       if (ethereum) {
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
-        const megalisV2Contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
 
         console.log("Liste de toutes les publications : ");
-        const publications = await megalisV2Contract.getAllPublication();
+        const publications = await megalisV1Contract.getAllPublication();
         console.table(publications);
 
         /*
@@ -180,7 +180,7 @@ function App() {
         let publisCleaned = [];
         publications.forEach(publi => {
           publisCleaned.push({
-            //address: publi.Publisher,
+            address: publi.Publisher,
             siren: publi.Publisher_siren,
             url: publi.Doc_url,
             hash: publi.Doc_hash,
@@ -195,7 +195,7 @@ function App() {
         setAllPublications(publisCleaned);
 
       } else {
-        console.log("Ethereum object doesn't exist!");
+        console.log("Ethereum object doesn't exist or not detected, get Metamask !");
       }
     } catch (error) {
       console.log(error);
@@ -207,7 +207,7 @@ function App() {
    */
   useEffect(() => {
     checkIfWalletIsConnected();
-    let megalisV2Contract;
+    let megalisV1Contract;
 
     const onNewPublication = (_publisher, _siren, _url, _hash, _timestamp, _state) => {
       console.log("NewPublication", _publisher, _siren, _url, _hash, _timestamp, _state);
@@ -228,13 +228,13 @@ function App() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
 
-      megalisV2Contract = new ethers.Contract(contractAddress, contractABI, signer);
-      megalisV2Contract.on("NewPublication", onNewPublication);
+      megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
+      megalisV1Contract.on("NewPublication", onNewPublication);
     }
 
     return () => {
-      if (megalisV2Contract) {
-        megalisV2Contract.off("NewPublication", onNewPublication);
+      if (megalisV1Contract) {
+        megalisV1Contract.off("NewPublication", onNewPublication);
       }
     };
   }, );
@@ -250,6 +250,12 @@ function App() {
           <h3>Ecrit une publication en publie la en envoyant une transaction dans la blockchain !</h3>
         </div>
 
+        {!currentAccount && (
+            <button onClick={connectWallet}>
+              Connect Wallet
+            </button>
+        )}
+
         <label>
           <table>
             <tr>
@@ -263,28 +269,29 @@ function App() {
           <table>
             <tr>
               <td><h4> Lire les données du smart contract : </h4></td>
-              <td><button onClick={allSiren}>Voir toutes les adresses ayant publier</button></td>
-              <td><button onClick={allPublication}>Voir toutes les publications</button></td>
+              <td><button onClick={allSiren}>Voir tous les numéros de Sirens ayant publier</button></td>
+              <td><button onClick={allPublication}>Voir toutes les publications ( Ne fonctionne pas pour le moment )</button></td>
             </tr>
           </table>
           <table>
             <tr>
               <td><h4> Lire les données d'un siren : </h4></td>
-              <td><p>Adresse : <input type="text"  onChange={addressInput}/></p></td>
-              <td><button onClick={sirenPublication}>Voir les publications de cette adresse</button></td>
+              <td><p>Numéro de Siren : <input type="text"  onChange={addressInput}/></p></td>
+              <td><button onClick={sirenPublication}>Voir les publications de ce siren</button></td>
             </tr>
           </table>
         </label>
 
-        {!currentAccount && (
-            <button onClick={connectWallet}>
-              Connect Wallet
-            </button>
-        )}
+        <a href="https://ropsten.etherscan.io/address/0x6b3E0aaaB217e1CB61aAF461F2A075d5F84Fb33e" target="_blank" rel="noreferrer" onClick="fonction(this.href); return false;">
+          <button>
+            Voir le contrat sur Etherscan
+          </button>
+        </a>
 
         {allPublications.map((publi, index) => {
           return (
               <div key={index}>
+                <div>Adresse: {publi.Publisher}</div>
                 <div>Siren: {publi.Publisher_siren}</div>
                 <div>URL: {publi.Doc_url}</div>
                 <div>Hash: {publi.Doc_hash}</div>
@@ -293,12 +300,6 @@ function App() {
               </div>)
         })
         }
-
-        <a href={"https://ropsten.etherscan.io/address/0x530A6F3bb5c5dB2de8bd0a69B46de9b71Ec34b94"} target="_blank" onClick="fonction(this.href); return false;">
-          <button>
-            Voir le contrat sur Etherscan
-          </button>
-        </a>
 
       </header>
     </div>
