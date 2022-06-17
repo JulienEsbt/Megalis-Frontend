@@ -207,6 +207,7 @@ function App() {
    */
   useEffect(() => {
     checkIfWalletIsConnected();
+    /*
     let megalisV1Contract;
 
     const onNewPublication = (_publisher, _siren, _url, _hash, _timestamp, _state) => {
@@ -236,7 +237,7 @@ function App() {
       if (megalisV1Contract) {
         megalisV1Contract.off("NewPublication", onNewPublication);
       }
-    };
+    };*/
   }, );
 
   /**
