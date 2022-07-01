@@ -3,15 +3,37 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import abi from "./utils/megalisV1.json";
 
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Typography from '@mui/material/Typography';
+import ExpandMoreIcon from '@mui/icons-material/esm/ExpandMore';
+import Button from '@mui/material/Button';
+
 function App() {
-  const contractAddress = "0x6b3E0aaaB217e1CB61aAF461F2A075d5F84Fb33e";
+
+  const CONTRACT_ADDRESS_V1_ROPSTEN = "0x67F1F01A24E5f2B8dD574f7e9C86b94B2e0E917F";;
+  const CONTRACT_ADDRESS_V1_GOERLI = "0xD1A36e0d2f7AC156593E6a243918C722e7b81B8c";
+  const CONTRACT_ADDRESS_V1_RINKEBY = "0x690C8AACb965Ca2A567dc89287D504De1137f19c";
+  const CONTRACT_ADDRESS_V1_KOVAN = "0xD1A36e0d2f7AC156593E6a243918C722e7b81B8c";
+  const CONTRACT_ADDRESS_V1_GNOSIS = "0xD3D67E39E3399fC28242BAC053Fb63c4A0bfbe48";
+  const CONTRACT_ADDRESS_V1_POLYGON_MUMBAI = "0xcb00c34B9B5687CCb44AfA332EF78BD6d423F598";
 
   const [currentAccount, setCurrentAccount] = useState();
   const [siren, setSiren] = useState('Aucun siren.');
   const [url, setUrl] = useState('Aucun url.');
   const [hash, setHash] = useState('Aucun hash.');
   const [adresse, setAdresse] = useState('Aucune adresse.');
-  const [allPublications, setAllPublications] = useState([]);
+  const [expanded, setExpanded] = React.useState(false);
+  const [network, setNetwork] = useState('Unknow network');
+  const [etherscan, setEtherscan] = useState('Pas dexplorer disponible pour le moment');
+  const [contractAddress, setContractAdress] = useState('Le contrat n`a pas été déployer sur ce réseau');
+  const [contractInfo, setContractInfo] = useState({address: "-",});
+  const [txs, setTxs] = useState([]);
+
+  const handleChange = (panel) => (event, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
 
   let sirenInput = (e) => {
     console.log("sirenInput")
@@ -38,6 +60,40 @@ function App() {
    */
   const contractABI = abi.abi;
 
+  const setNetworkName = async () => {
+    const networkBis = await window.ethereum.request({method: 'net_version'});
+    if (networkBis === '1' ) { setNetwork('Ethereum (Mainnet)')}
+    else if (networkBis === '3' ) { setNetwork('Ropsten (Ethereum Testnet)')}
+    else if (networkBis === '5' ) { setNetwork('Goerli (Ethereum Testnet)')}
+    else if (networkBis === '4' ) { setNetwork('Rinkeby (Ethereum Testnet)')}
+    else if (networkBis === '42' ) { setNetwork('Kovan (Ethereum Testnet)')}
+    else if (networkBis === '100' ) { setNetwork('Gnosis (Mainnet - XDai Chain)')}
+    else if (networkBis === '137' ) { setNetwork('Polygon (Mainnet - Matic)')}
+    else if (networkBis === '80001' ) { setNetwork('Mumbai (Polygon Testnet)')}
+  }
+
+  const setEtherscanUrl = async () => {
+    const networkBis = await window.ethereum.request({method: 'net_version'});
+    if (networkBis === '1' ) { setEtherscan('https://etherscan.io/address/')}
+    else if (networkBis === '3' ) { setEtherscan('https://ropsten.etherscan.io/address/')}
+    else if (networkBis === '5' ) { setEtherscan('https://goerli.etherscan.io/address/')}
+    else if (networkBis === '4' ) { setEtherscan('https://rinkeby.etherscan.io/address/')}
+    else if (networkBis === '42' ) { setEtherscan('https://kovan.etherscan.io/address/')}
+    else if (networkBis === '100' ) { setEtherscan('https://blockscout.com/xdai/mainnet/address/')}
+    else if (networkBis === '137' ) { setEtherscan('https://polygonscan.com/address/')}
+    else if (networkBis === '80001' ) { setEtherscan('https://mumbai.polygonscan.com/address/')}
+  }
+
+  const setAdressOfTheContract= async () => {
+    const networkBis = await window.ethereum.request({method: 'net_version'});
+    if (networkBis === '3' ) { setContractAdress(CONTRACT_ADDRESS_V1_ROPSTEN)}
+    else if (networkBis === '5' ) { setContractAdress(CONTRACT_ADDRESS_V1_GOERLI)}
+    else if (networkBis === '4' ) { setContractAdress(CONTRACT_ADDRESS_V1_RINKEBY)}
+    else if (networkBis === '42' ) { setContractAdress(CONTRACT_ADDRESS_V1_KOVAN)}
+    else if (networkBis === '100' ) { setContractAdress(CONTRACT_ADDRESS_V1_GNOSIS)}
+    else if (networkBis === '80001' ) { setContractAdress(CONTRACT_ADDRESS_V1_POLYGON_MUMBAI)}
+  }
+
     /**
      * Implement checkIfWalletIsConnected method
      */
@@ -48,10 +104,13 @@ function App() {
           const accounts = await window.ethereum.request({method: "eth_accounts"});
           if (accounts.length !== 0) {
             const account = accounts[0];
-            console.log("Found an authorized account:", account);
+            setEtherscanUrl();
+            setAdressOfTheContract();
+            setNetworkName();
+            console.log("The account", account, "is connected on", network, "network.");
             setCurrentAccount(account);
           } else {
-            console.log("No authorized account found")
+            console.log("No connected account.")
           }
         } catch (error) {
           console.log(error);
@@ -59,6 +118,13 @@ function App() {
       } else {
         alert("Ethereum object doesn't exist or not detected, get Metamask !");
       }
+    }
+
+    const update = async () => {
+      setEtherscanUrl();
+      setAdressOfTheContract();
+      setNetworkName();
+      checkIfWalletIsConnected();
     }
 
     /**
@@ -98,6 +164,7 @@ function App() {
         console.log("Mining...", tx.hash);
         await tx.wait();
         console.log("Mined -- ", tx.hash);
+        setContractInfo({address: tx.hash})
 
       } else {
         console.log("Ethereum object doesn't exist or not detected, get Metamask !");
@@ -173,27 +240,6 @@ function App() {
         const publications = await megalisV1Contract.getAllPublication();
         console.table(publications);
 
-        /*
-         * We only need address, timestamp, and message in our UI so let's
-         * pick those out
-         */
-        let publisCleaned = [];
-        publications.forEach(publi => {
-          publisCleaned.push({
-            address: publi.Publisher,
-            siren: publi.Publisher_siren,
-            url: publi.Doc_url,
-            hash: publi.Doc_hash,
-            timestamp: new Date(publi.timestamp * 1000),
-            etat: publi.State
-          });
-        });
-
-        /*
-         * Store our data in React State
-         */
-        setAllPublications(publisCleaned);
-
       } else {
         console.log("Ethereum object doesn't exist or not detected, get Metamask !");
       }
@@ -207,37 +253,37 @@ function App() {
    */
   useEffect(() => {
     checkIfWalletIsConnected();
-    /*
-    let megalisV1Contract;
 
-    const onNewPublication = (_publisher, _siren, _url, _hash, _timestamp, _state) => {
-      console.log("NewPublication", _publisher, _siren, _url, _hash, _timestamp, _state);
-      setAllPublications(prevState => [
-        ...prevState,
-        {
-          address: _publisher,
-          siren: _siren,
-          url: _url,
-          hash: _hash,
-          timestamp: new Date(_timestamp * 1000),
-          etat: _state
-        },
-      ]);
-    };
+    if (contractInfo.address !== "-") {
+      try {
+        const {ethereum} = window;
+        if (ethereum) {
+          const provider = new ethers.providers.Web3Provider(ethereum);
+          const signer = provider.getSigner();
+          const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
 
-    if (window.ethereum) {
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner();
+          megalisV1Contract.on("NewPublication", (from, publisher_siren, doc_url, doc_hash, timestamp) => {
+            console.log({from, publisher_siren, doc_url, doc_hash, timestamp});
+            setTxs((currentTxs) => [
+                ...currentTxs,
+              {
+                /*txHash: window.event.transactionHash,*/
+                address: from,
+                publisher_siren: String(publisher_siren),
+                doc_url: String(doc_url),
+                doc_hash: String(doc_hash),
+                timestamp: new Date(timestamp*1000)
+              }
+            ])
+          })
 
-      megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
-      megalisV1Contract.on("NewPublication", onNewPublication);
-    }
-
-    return () => {
-      if (megalisV1Contract) {
-        megalisV1Contract.off("NewPublication", onNewPublication);
+        } else {
+          console.log("Ethereum object doesn't exist or not detected, get Metamask !");
+        }
+      } catch (error) {
+        console.log(error);
       }
-    };*/
+    }
   }, );
 
   /**
@@ -248,20 +294,28 @@ function App() {
       <header className="App-header">
         <h1>Megalis Project</h1>
         <div>
-          <h3>Ecrit une publication en publie la en envoyant une transaction dans la blockchain !</h3>
+          <h3>Ecris une publication et publie la en envoyant une transaction dans la blockchain !</h3>
         </div>
 
-        {!currentAccount && (
-            <button onClick={connectWallet}>
-              Connect Wallet
-            </button>
-        )}
+        <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1bh-content" id="panel1bh-header">
+            <Typography sx={{ width: '33%', flexShrink: 0 }}>Réseau :</Typography>
+            {currentAccount && (<Typography sx={{ color: 'text.secondary' }}>{network}</Typography>)}
+            {!currentAccount && (<Button variant="outlined" onClick={connectWallet}>Non connecté : Connecte ton Wallet</Button>)}
+          </AccordionSummary>
+          <AccordionDetails>
+            {currentAccount && (<Typography>
+              Adresse connecté : {currentAccount}
+            </Typography>)}
+            <Typography>Pour changer de réseau, changer de réseau sur votre extension Metamask.</Typography>
+          </AccordionDetails>
+        </Accordion>
 
         <label>
           <table>
             <tr>
               <td><h4> Publier un document : </h4></td>
-              <td><p>Siren : <input type="text"  onChange={sirenInput}/></p></td>
+              <td><p>Siren : <input type="text" onChange={sirenInput}/></p></td>
               <td><p>Url : <input type="text" onChange={urlInput}/></p></td>
               <td><p>Hash : <input type="text" onChange={hashInput}/></p></td>
               <td><button onClick={post}>Publier le document</button></td>
@@ -283,24 +337,27 @@ function App() {
           </table>
         </label>
 
-        <a href="https://ropsten.etherscan.io/address/0x6b3E0aaaB217e1CB61aAF461F2A075d5F84Fb33e" target="_blank" rel="noreferrer" onClick="fonction(this.href); return false;">
+        <a href={etherscan+contractAddress} target="_blank" rel="noreferrer" onClick="fonction(this.href); return false;">
           <button>
-            Voir le contrat sur Etherscan
+            Voir le contrat
           </button>
         </a>
 
-        {allPublications.map((publi, index) => {
-          return (
-              <div key={index}>
-                <div>Adresse: {publi.Publisher}</div>
-                <div>Siren: {publi.Publisher_siren}</div>
-                <div>URL: {publi.Doc_url}</div>
-                <div>Hash: {publi.Doc_hash}</div>
-                <div>Time: {publi.timestamp.toString()}</div>
-                <div>etat: {publi.State}</div>
-              </div>)
-        })
-        }
+        <button onClick={update}> Update </button>
+
+        {txs.map((item) => (
+            <div key={item.txHash} style={{ backgroundColor: "black", marginTop: "16px", padding: "8px" }}>
+                <div>
+                  {/*<div>hashTx: {item.txHash}</div>*/}
+                  <div>From: {item.address}</div>
+                  <div>Siren: {item.publisher_siren}</div>
+                  <div>Urldoc: {item.doc_url}</div>
+                  <div>Hashdoc: {item.doc_hash}</div>
+                  <div>Time: {item.timestamp.toString()}</div>
+                  {/*<a href={`${etherscan}+${item.txHash}`} target="_blank"><button>Voir la transaction</button></a>-->*/}
+                </div>
+            </div>
+        ))}
 
       </header>
     </div>
@@ -308,3 +365,5 @@ function App() {
 }
 
 export default App;
+
+//<td><p>Siren : <input type="number"/></p></td> a mettre dans le html si uint256 au lieu de string
