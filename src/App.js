@@ -29,6 +29,7 @@ function App() {
   const [etherscan, setEtherscan] = useState('Pas dexplorer disponible pour le moment');
   const [contractAddress, setContractAdress] = useState('Le contrat n`a pas été déployer sur ce réseau');
   const [contractInfo, setContractInfo] = useState({address: "-",});
+  const [contractInfoBis, setContractInfoBis] = useState();
   const [txs, setTxs] = useState([]);
 
   const handleChange = (panel) => (event, isExpanded) => {
@@ -60,38 +61,16 @@ function App() {
    */
   const contractABI = abi.abi;
 
-  const setNetworkName = async () => {
+  const updateNetwork = async () => {
     const networkBis = await window.ethereum.request({method: 'net_version'});
-    if (networkBis === '1' ) { setNetwork('Ethereum (Mainnet)')}
-    else if (networkBis === '3' ) { setNetwork('Ropsten (Ethereum Testnet)')}
-    else if (networkBis === '5' ) { setNetwork('Goerli (Ethereum Testnet)')}
-    else if (networkBis === '4' ) { setNetwork('Rinkeby (Ethereum Testnet)')}
-    else if (networkBis === '42' ) { setNetwork('Kovan (Ethereum Testnet)')}
-    else if (networkBis === '100' ) { setNetwork('Gnosis (Mainnet - XDai Chain)')}
-    else if (networkBis === '137' ) { setNetwork('Polygon (Mainnet - Matic)')}
-    else if (networkBis === '80001' ) { setNetwork('Mumbai (Polygon Testnet)')}
-  }
-
-  const setEtherscanUrl = async () => {
-    const networkBis = await window.ethereum.request({method: 'net_version'});
-    if (networkBis === '1' ) { setEtherscan('https://etherscan.io/address/')}
-    else if (networkBis === '3' ) { setEtherscan('https://ropsten.etherscan.io/address/')}
-    else if (networkBis === '5' ) { setEtherscan('https://goerli.etherscan.io/address/')}
-    else if (networkBis === '4' ) { setEtherscan('https://rinkeby.etherscan.io/address/')}
-    else if (networkBis === '42' ) { setEtherscan('https://kovan.etherscan.io/address/')}
-    else if (networkBis === '100' ) { setEtherscan('https://blockscout.com/xdai/mainnet/address/')}
-    else if (networkBis === '137' ) { setEtherscan('https://polygonscan.com/address/')}
-    else if (networkBis === '80001' ) { setEtherscan('https://mumbai.polygonscan.com/address/')}
-  }
-
-  const setAdressOfTheContract= async () => {
-    const networkBis = await window.ethereum.request({method: 'net_version'});
-    if (networkBis === '3' ) { setContractAdress(CONTRACT_ADDRESS_V1_ROPSTEN)}
-    else if (networkBis === '5' ) { setContractAdress(CONTRACT_ADDRESS_V1_GOERLI)}
-    else if (networkBis === '4' ) { setContractAdress(CONTRACT_ADDRESS_V1_RINKEBY)}
-    else if (networkBis === '42' ) { setContractAdress(CONTRACT_ADDRESS_V1_KOVAN)}
-    else if (networkBis === '100' ) { setContractAdress(CONTRACT_ADDRESS_V1_GNOSIS)}
-    else if (networkBis === '80001' ) { setContractAdress(CONTRACT_ADDRESS_V1_POLYGON_MUMBAI)}
+    if (networkBis === '1' ) { setNetwork('Ethereum (Mainnet)'); setEtherscan('https://etherscan.io/')}
+    else if (networkBis === '3' ) { setNetwork('Ropsten (Ethereum Testnet)'); setEtherscan('https://ropsten.etherscan.io/'); setContractAdress(CONTRACT_ADDRESS_V1_ROPSTEN)}
+    else if (networkBis === '5' ) { setNetwork('Goerli (Ethereum Testnet)'); setEtherscan('https://goerli.etherscan.io/'); setContractAdress(CONTRACT_ADDRESS_V1_GOERLI)}
+    else if (networkBis === '4' ) { setNetwork('Rinkeby (Ethereum Testnet)'); setEtherscan('https://rinkeby.etherscan.io/'); setContractAdress(CONTRACT_ADDRESS_V1_RINKEBY)}
+    else if (networkBis === '42' ) { setNetwork('Kovan (Ethereum Testnet)'); setEtherscan('https://kovan.etherscan.io/'); setContractAdress(CONTRACT_ADDRESS_V1_KOVAN)}
+    else if (networkBis === '100' ) { setNetwork('Gnosis (Mainnet - XDai Chain)'); setEtherscan('https://blockscout.com/xdai/mainnet/'); setContractAdress(CONTRACT_ADDRESS_V1_GNOSIS)}
+    else if (networkBis === '137' ) { setNetwork('Polygon (Mainnet - Matic)'); setEtherscan('https://polygonscan.com/')}
+    else if (networkBis === '80001' ) { setNetwork('Mumbai (Polygon Testnet)'); setEtherscan('https://mumbai.polygonscan.com/'); setContractAdress(CONTRACT_ADDRESS_V1_POLYGON_MUMBAI)}
   }
 
     /**
@@ -99,18 +78,16 @@ function App() {
      */
     const checkIfWalletIsConnected = async () => {
       if (window.ethereum) {
-        console.log("Metamask or Ethereum Object detected.")
+        //console.log("Metamask or Ethereum Object detected.")
         try {
+          await updateNetwork();
           const accounts = await window.ethereum.request({method: "eth_accounts"});
           if (accounts.length !== 0) {
             const account = accounts[0];
-            setEtherscanUrl();
-            setAdressOfTheContract();
-            setNetworkName();
             console.log("The account", account, "is connected on", network, "network.");
             setCurrentAccount(account);
           } else {
-            console.log("No connected account.")
+            console.log("Metamask or Ethereum Object detected, but connection failed.")
           }
         } catch (error) {
           console.log(error);
@@ -118,13 +95,6 @@ function App() {
       } else {
         alert("Ethereum object doesn't exist or not detected, get Metamask !");
       }
-    }
-
-    const update = async () => {
-      setEtherscanUrl();
-      setAdressOfTheContract();
-      setNetworkName();
-      checkIfWalletIsConnected();
     }
 
     /**
@@ -223,38 +193,8 @@ function App() {
     }
   }
 
-  /**
-   * Implement getAllPublication method
-   */
-  // TODO getAllPublication à refaire dans le smart contract car bug.
-  const allPublication = async () => {
-    try {
-      const { ethereum } = window;
-
-      if (ethereum) {
-        const provider = new ethers.providers.Web3Provider(ethereum);
-        const signer = provider.getSigner();
-        const megalisV1Contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-        console.log("Liste de toutes les publications : ");
-        const publications = await megalisV1Contract.getAllPublication();
-        console.table(publications);
-
-      } else {
-        console.log("Ethereum object doesn't exist or not detected, get Metamask !");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  /**
-   * Listen in for emitter events!
-   */
-  useEffect(() => {
-    checkIfWalletIsConnected();
-
-    if (contractInfo.address !== "-") {
+  const updateTransaction = async () => {
+    if (contractInfo.address !== contractInfoBis) {
       try {
         const {ethereum} = window;
         if (ethereum) {
@@ -265,9 +205,9 @@ function App() {
           megalisV1Contract.on("NewPublication", (from, publisher_siren, doc_url, doc_hash, timestamp) => {
             console.log({from, publisher_siren, doc_url, doc_hash, timestamp});
             setTxs((currentTxs) => [
-                ...currentTxs,
+              ...currentTxs,
               {
-                /*txHash: window.event.transactionHash,*/
+                txHash: contractInfo.address,
                 address: from,
                 publisher_siren: String(publisher_siren),
                 doc_url: String(doc_url),
@@ -276,7 +216,7 @@ function App() {
               }
             ])
           })
-
+          setContractInfoBis(contractInfo.address);
         } else {
           console.log("Ethereum object doesn't exist or not detected, get Metamask !");
         }
@@ -284,6 +224,20 @@ function App() {
         console.log(error);
       }
     }
+  }
+
+  const update = async () => {
+    await checkIfWalletIsConnected();
+    await updateTransaction();
+  }
+
+  /**
+   * Listen in for emitter events!
+   */
+  useEffect(() => {
+    checkIfWalletIsConnected();
+    updateTransaction();
+
   }, );
 
   /**
@@ -325,7 +279,6 @@ function App() {
             <tr>
               <td><h4> Lire les données du smart contract : </h4></td>
               <td><button onClick={allSiren}>Voir tous les numéros de Sirens ayant publier</button></td>
-              <td><button onClick={allPublication}>Voir toutes les publications ( Ne fonctionne pas pour le moment )</button></td>
             </tr>
           </table>
           <table>
@@ -337,7 +290,7 @@ function App() {
           </table>
         </label>
 
-        <a href={etherscan+contractAddress} target="_blank" rel="noreferrer" onClick="fonction(this.href); return false;">
+        <a href={etherscan+'address/'+contractAddress} target="_blank" rel="noreferrer">
           <button>
             Voir le contrat
           </button>
@@ -348,13 +301,13 @@ function App() {
         {txs.map((item) => (
             <div key={item.txHash} style={{ backgroundColor: "black", marginTop: "16px", padding: "8px" }}>
                 <div>
-                  {/*<div>hashTx: {item.txHash}</div>*/}
-                  <div>From: {item.address}</div>
-                  <div>Siren: {item.publisher_siren}</div>
-                  <div>Urldoc: {item.doc_url}</div>
-                  <div>Hashdoc: {item.doc_hash}</div>
-                  <div>Time: {item.timestamp.toString()}</div>
-                  {/*<a href={`${etherscan}+${item.txHash}`} target="_blank"><button>Voir la transaction</button></a>-->*/}
+                  {/*<div>Transaction Hash: {item.txHash}</div>*/}
+                  {/*<div>From : {item.address}</div>*/}
+                  <div>Numéro de Siren : {item.publisher_siren}</div>
+                  <div>Url du document : {item.doc_url}</div>
+                  <div>Hash du document : {item.doc_hash}</div>
+                  <div>Heure de publication : {item.timestamp.toString()}</div>
+                  <a href={`${etherscan}tx/${item.txHash}`} target="_blank" rel="noreferrer"><button>Voir la transaction</button></a>
                 </div>
             </div>
         ))}
@@ -365,5 +318,3 @@ function App() {
 }
 
 export default App;
-
-//<td><p>Siren : <input type="number"/></p></td> a mettre dans le html si uint256 au lieu de string
