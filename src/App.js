@@ -9,6 +9,8 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
 import ExpandMoreIcon from '@mui/icons-material/esm/ExpandMore';
 import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
 
 function App() {
 
@@ -32,29 +34,15 @@ function App() {
   const [contractInfoBis, setContractInfoBis] = useState();
   const [txs, setTxs] = useState([]);
 
-  const handleChange = (panel) => (event, isExpanded) => {
-    setExpanded(isExpanded ? panel : false);
-  };
+  const handleChange = (panel) => (event, isExpanded) => { setExpanded(isExpanded ? panel : false); };
 
-  let sirenInput = (e) => {
-    console.log("sirenInput")
-    setSiren(e.target.value)
-  };
+  let sirenInput = (e) => { console.log("sirenInput"); setSiren(e.target.value) };
 
-  let urlInput = (e) => {
-    console.log("urlInput")
-    setUrl(e.target.value)
-  };
+  let urlInput = (e) => { console.log("urlInput"); setUrl(e.target.value) };
 
-  let hashInput = (e) => {
-    console.log("hashInput")
-    setHash(e.target.value)
-  };
+  let hashInput = (e) => { console.log("hashInput"); setHash(e.target.value) };
 
-  let addressInput = (e) => {
-    console.log("addressInput")
-    setAdresse(e.target.value)
-  };
+  let addressInput = (e) => { console.log("addressInput"); setAdresse(e.target.value) };
 
   /**
    * Create a variable here that references the abi content!
@@ -73,52 +61,51 @@ function App() {
     else if (networkBis === '80001' ) { setNetwork('Mumbai (Polygon Testnet)'); setEtherscan('https://mumbai.polygonscan.com/'); setContractAdress(CONTRACT_ADDRESS_V1_POLYGON_MUMBAI)}
   }
 
-    /**
-     * Implement checkIfWalletIsConnected method
-     */
-    const checkIfWalletIsConnected = async () => {
-      if (window.ethereum) {
-        //console.log("Metamask or Ethereum Object detected.")
-        try {
-          await updateNetwork();
-          const accounts = await window.ethereum.request({method: "eth_accounts"});
-          if (accounts.length !== 0) {
-            const account = accounts[0];
-            console.log("The account", account, "is connected on", network, "network.");
-            setCurrentAccount(account);
-          } else {
-            console.log("Metamask or Ethereum Object detected, but connection failed.")
-          }
-        } catch (error) {
-          console.log(error);
+  /**
+   * Implement checkIfWalletIsConnected method, async function to see if Metamask (or other object) is connected to our App.
+   */
+  const checkIfWalletIsConnected = async () => {
+    if (window.ethereum) {
+      try {
+        await updateNetwork();
+        const accounts = await window.ethereum.request({method: "eth_accounts"});
+        if (accounts.length !== 0) {
+          const account = accounts[0];
+          console.log("The account", account, "is connected on", network, "network.");
+          setCurrentAccount(account);
+        } else {
+          console.log("Metamask or Ethereum Object detected, but connection failed or not yet established.")
         }
-      } else {
-        alert("Ethereum object doesn't exist or not detected, get Metamask !");
+      } catch (error) {
+        console.log(error);
       }
+    } else {
+      alert("Ethereum object doesn't exist or not detected, get Metamask !");
     }
-
-    /**
-     * Implement connectWallet method
-     */
-    const connectWallet = async () => {
-      console.log("Requesting account...");
-      // Check if Metamask extension or other browser extension exists
-      if (window.ethereum) {
-        console.log("Metamask or Ethereum Object detected.")
-        try {
-          const accounts = await window.ethereum.request({method: "eth_requestAccounts"});
-          console.log("Connected to %s", accounts[0]);
-          setCurrentAccount(accounts[0]);
-        } catch (error) {
-          console.log(error);
-        }
-      } else {
-        alert("Ethereum object doesn't exist or not detected, get Metamask !");
-      }
-    }
+  }
 
   /**
-   * Implement publish method
+   * Implement connectWallet method, async function to connect Metamask (or other object) to our App.
+   */
+  const connectWallet = async () => {
+    console.log("Requesting account...");
+    // Check if Metamask extension or other browser extension exists
+    if (window.ethereum) {
+      console.log("Metamask or Ethereum Object detected.")
+      try {
+        const accounts = await window.ethereum.request({method: "eth_requestAccounts"});
+        console.log("Connected to %s", accounts[0]);
+        setCurrentAccount(accounts[0]);
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      alert("Ethereum object doesn't exist or not detected, get Metamask !");
+    }
+  }
+
+  /**
+   * Implement publish method from the smart contract, to put a publication on the blockchain
    */
   const post = async () => {
     try {
@@ -146,7 +133,7 @@ function App() {
   }
 
   /**
-   * Implement getAllSirens method
+   * Implement getAllSirens method from the smart contract
    */
   const allSiren = async () => {
     try {
@@ -171,7 +158,7 @@ function App() {
   }
 
   /**
-   * Implement getSirenPublication method
+   * Implement getSirenPublication method from the smart contract
    */
   const sirenPublication = async () => {
     try {
@@ -237,18 +224,16 @@ function App() {
   useEffect(() => {
     checkIfWalletIsConnected();
     updateTransaction();
-
   }, );
 
   /**
    * Page HTML
    */
   return (
-    <div className="App">
       <header className="App-header">
         <h1>Megalis Project</h1>
         <div>
-          <h3>Ecris une publication et publie la en envoyant une transaction dans la blockchain !</h3>
+          <h3>Prouve l'horodatage de tes documents en les publiant sur la blockchain !</h3>
         </div>
 
         <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
@@ -267,53 +252,58 @@ function App() {
 
         <label>
           <table>
+            <tbody>
             <tr>
-              <td><h4> Publier un document : </h4></td>
-              <td><p>Siren : <input type="text" onChange={sirenInput}/></p></td>
-              <td><p>Url : <input type="text" onChange={urlInput}/></p></td>
-              <td><p>Hash : <input type="text" onChange={hashInput}/></p></td>
-              <td><button onClick={post}>Publier le document</button></td>
-            </tr>
+              <Box sx={{ '& button': { m: 1 } }}>
+                <td><h4> Publier un document : </h4></td>
+                <td><TextField helperText="Entrez votre numéro de Siren." label="Siren" variant="outlined" onChange={sirenInput}/></td>
+                <td><TextField helperText="Entrez l'url du document." label="Url" variant="outlined" onChange={urlInput}/></td>
+                <td><TextField helperText="Entrez le Hash du document." label="Hash" variant="outlined" onChange={hashInput}/></td>
+                <td><Button variant="contained" onClick={post}>Publier le document</Button></td>
+              </Box>
+            </tr></tbody>
           </table>
           <table>
+            <tbody>
             <tr>
               <td><h4> Lire les données du smart contract : </h4></td>
-              <td><button onClick={allSiren}>Voir tous les numéros de Sirens ayant publier</button></td>
-            </tr>
+              <td><Button variant="contained" onClick={allSiren}>Voir tous les numéros de Sirens ayant publier</Button></td>
+            </tr></tbody>
           </table>
           <table>
+            <tbody>
             <tr>
-              <td><h4> Lire les données d'un siren : </h4></td>
-              <td><p>Numéro de Siren : <input type="text"  onChange={addressInput}/></p></td>
-              <td><button onClick={sirenPublication}>Voir les publications de ce siren</button></td>
-            </tr>
+              <Box sx={{ '& button': { m: 1 } }}>
+                <td><h4> Lire les données d'un siren : </h4></td>
+                <td><TextField helperText="Entrez un numéro de Siren." label="Siren" variant="outlined" onChange={addressInput}/></td>
+                <td><Button variant="contained" onClick={sirenPublication}>Voir les publications de ce siren</Button></td>
+              </Box>
+            </tr></tbody>
           </table>
         </label>
 
         <a href={etherscan+'address/'+contractAddress} target="_blank" rel="noreferrer">
-          <button>
+          <Button variant="contained">
             Voir le contrat
-          </button>
+          </Button>
         </a>
-
-        <button onClick={update}> Update </button>
+        <p></p>
+        <Button variant="contained" onClick={update}> Rafraîchit la page </Button>
 
         {txs.map((item) => (
-            <div key={item.txHash} style={{ backgroundColor: "black", marginTop: "16px", padding: "8px" }}>
-                <div>
-                  {/*<div>Transaction Hash: {item.txHash}</div>*/}
-                  {/*<div>From : {item.address}</div>*/}
-                  <div>Numéro de Siren : {item.publisher_siren}</div>
-                  <div>Url du document : {item.doc_url}</div>
-                  <div>Hash du document : {item.doc_hash}</div>
-                  <div>Heure de publication : {item.timestamp.toString()}</div>
-                  <a href={`${etherscan}tx/${item.txHash}`} target="_blank" rel="noreferrer"><button>Voir la transaction</button></a>
-                </div>
+          <div key={item.txHash} style={{ backgroundColor: "mistyrose", marginTop: "16px", padding: "8px", border: "solid", borderRadius: "25px" }}>
+            <div>
+              {/*<div>Transaction Hash: {item.txHash}</div>*/}
+              {/*<div>From : {item.address}</div>*/}
+              <div>Numéro de Siren : {item.publisher_siren}</div>
+              <div>Url du document : {item.doc_url}</div>
+              <div>Hash du document : {item.doc_hash}</div>
+              <div>Heure de publication : {item.timestamp.toString()}</div>
+              <a href={`${etherscan}tx/${item.txHash}`} target="_blank" rel="noreferrer"><button>Voir la transaction</button></a>
             </div>
+          </div>
         ))}
-
       </header>
-    </div>
   );
 }
 
