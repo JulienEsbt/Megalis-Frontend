@@ -12,13 +12,12 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 
 function App() {
-
-    const CONTRACT_ADDRESS_V1_ROPSTEN = "0x67F1F01A24E5f2B8dD574f7e9C86b94B2e0E917F";
-    const CONTRACT_ADDRESS_V1_GOERLI = "0xD1A36e0d2f7AC156593E6a243918C722e7b81B8c";
-    const CONTRACT_ADDRESS_V1_RINKEBY = "0x690C8AACb965Ca2A567dc89287D504De1137f19c";
-    const CONTRACT_ADDRESS_V1_KOVAN = "0xD1A36e0d2f7AC156593E6a243918C722e7b81B8c";
-    const CONTRACT_ADDRESS_V1_GNOSIS = "0xD3D67E39E3399fC28242BAC053Fb63c4A0bfbe48";
-    const CONTRACT_ADDRESS_V1_POLYGON_MUMBAI = "0xcb00c34B9B5687CCb44AfA332EF78BD6d423F598";
+    const CONTRACT_ADDRESS_V1_ROPSTEN = "0xaAbf9410AEC0177DFEe5A16c0E5e750ACD4E0641"
+    const CONTRACT_ADDRESS_V1_RINKEBY = "0xf3AE999a7C606F0d92dB8dEe4280a21063C98371"
+    const CONTRACT_ADDRESS_V1_KOVAN = "0x0dA1F4A98eD55aAe34c0AE7078A08A3BFe7aaeE5"
+    const CONTRACT_ADDRESS_V1_GOERLI = "0xcb00c34B9B5687CCb44AfA332EF78BD6d423F598"
+    const CONTRACT_ADDRESS_V1_POLYGON_MUMBAI = "0x50343D2aDF8C615b7e39c00313B419dFf4A54235"
+    const CONTRACT_ADDRESS_V1_GNOSIS = "0x2926073309fEFc73a2372c4288C878F47096aDbA"
 
     const [currentAccount, setCurrentAccount] = useState();
     const [siren, setSiren] = useState('Aucun siren.');
@@ -32,6 +31,7 @@ function App() {
     const [contractInfo, setContractInfo] = useState({address: "-",});
     const [contractInfoBis, setContractInfoBis] = useState();
     const [txs, setTxs] = useState([]);
+    //const [allSirentab, setAllSirenTab] = useState([]);
 
     const handleChange = (panel) => (event, isExpanded) => {
         setExpanded(isExpanded ? panel : false);
@@ -183,7 +183,15 @@ function App() {
                 console.log("Liste des adresses ayant publié quelque chose : ");
                 const sirens = await megalisV1Contract.getAllSirens();
                 console.table(sirens);
-
+                /*
+                setAllSirenTab(siren);
+                return (
+                    <table>
+                        ${allSirentab}
+                        ${siren}
+                    </table>
+                )
+                */
             } else {
                 console.log("Ethereum object doesn't exist or not detected, get Metamask !");
             }
@@ -208,6 +216,27 @@ function App() {
                 console.log("Liste des publications de l'adresse %s : ", adresse);
                 const publications = await megalisV1Contract.getSirenPublications(adresse);
                 console.table(publications);
+                /*
+                return (
+                    <table>
+                        <tr>
+                            ${publications.address}
+                        </tr>
+                        <tr>
+                            ${publications.publisher_siren}
+                        </tr>
+                        <tr>
+                            ${publications.doc_url}
+                        </tr>
+                        <tr>
+                            ${publications.doc_hash}
+                        </tr>
+                        <tr>
+                            {new Date(publications.timestamp*1000).toString()}
+                        </tr>
+                    </table>
+                )
+                */
             } else {
                 console.log("Ethereum object doesn't exist or not detected, get Metamask !");
             }
@@ -315,7 +344,7 @@ function App() {
 
             {txs.map((item) => (
                 <div key={item.txHash} style={{
-                    backgroundColor: "mistyrose",
+                    backgroundColor: "lightgrey",
                     marginTop: "16px",
                     padding: "8px",
                     border: "solid",
